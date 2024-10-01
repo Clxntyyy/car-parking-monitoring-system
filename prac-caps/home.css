@@ -1,0 +1,56 @@
+*{
+    padding: 0px;
+    margin: 0px;
+}
+
+body{
+    background: rgba(0, 0, 0, .2);
+}
+
+button{
+    background-color: greenyellow;
+    padding: 25px 15px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    position: relative;
+}
+
+button::after{
+    background-color: red;
+}
+
+button:hover{
+    background-color: green;
+}
+.rectangle {
+    height: 70px;
+    width: 100px;
+    background-color: #555;
+    position: absolute;
+    top: 35px;
+    right: 47%;
+}
+
+.RP{
+    position: absolute;
+    top: 35px;
+    right:17%;
+}
+
+.CP{
+    margin-top: 100px;
+}
+
+h1{
+    text-align: center;
+}
+
+h2{
+    float: right;
+}
+
+h3{
+    font-size: 23px;
+}
