@@ -1,0 +1,125 @@
+:root {
+	--background: #fbfbfb;
+	--background-foreground: #fff;
+	--foreground: #09090b;
+	--border: #ebebeb;
+	--radius: 0.5rem;
+	--text-base: 1rem;
+
+	--muted: #666;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+@font-face {
+	font-family: "GeistVF";
+	src: url("../fonts/GeistVF.woff") format("woff");
+}
+
+@font-face {
+	font-family: "GeistMonoVF";
+	src: url("../fonts/GeistMonoVF.woff") format("woff");
+}
+
+body {
+	font-family: "GeistMonoVF", sans-serif;
+	width: 100vw;
+	height: 100vh;
+	background-color: #fbfbfb;
+	color: var(--foreground);
+}
+
+.wrapper {
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+form {
+	font-family: "GeistVF", serif;
+
+	background: var(--background-foreground);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+
+	padding: 1.5rem;
+
+	.form-header {
+		margin-bottom: 1rem;
+		text-align: center;
+
+		img {
+			display: block;
+			margin: auto;
+			margin-bottom: 1rem;
+		}
+
+		h1 {
+			/* font-family: "GeistMonoVF", serif; */
+			font-size: 2.5rem;
+
+			margin-bottom: 0.25rem;
+		}
+		h3 {
+			letter-spacing: -0.025em;
+			font-size: 1.5rem;
+			line-height: 2rem;
+			font-weight: 600;
+		}
+		p {
+			color: var(--muted);
+			font-size: var(--text-base);
+			line-height: 1.5rem;
+
+			margin-top: 4px;
+		}
+	}
+
+	.form-group {
+		margin: 1rem 0;
+		label {
+			display: block;
+			font-weight: 500;
+			font-size: 0.875rem;
+
+			margin-bottom: 0.5rem;
+		}
+
+		input {
+			font-size: 0.875rem;
+			line-height: 1.25rem;
+
+			background: var(--background);
+			border: 1px solid var(--border);
+			border-radius: calc(var(--radius) - 4px);
+			padding: 0.5rem 0.75rem;
+
+			width: 100%;
+		}
+	}
+
+	button {
+		font-size: 0.875rem;
+		line-height: 1.25rem;
+
+		color: #fff;
+		background: #18181b;
+		border: 1px solid var(--border);
+		border-radius: calc(var(--radius) - 2px);
+		padding: 0.5rem 1rem;
+
+		width: 100%;
+
+		cursor: pointer;
+
+		&:hover {
+			background: #18181be1;
+		}
+	}
+}
