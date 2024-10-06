@@ -1,7 +1,7 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['access'] !== 'user') {
-    header("Location: home.php");
+if (!isset($_SESSION['user_id']) || $_SESSION['access'] !== 'admin') {
+    header("Location: adminpage.php");
     exit();
 }
 ?>
@@ -11,12 +11,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['access'] !== 'user') {
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<link rel="stylesheet" href="./assets/styles/home.css" />
-	<title>CPMS — Home</title>
+	<link rel="stylesheet" href="./assets/styles/homeadmin.css" />
+	<title>CPMS — Admin</title>
 </head>
 
 <body>
-<h1 class="greet">Welcome to ITC Car Parking Monitoring System, <?php echo $_SESSION['user_name']; ?>!</h1>
 	<div class="top-container">
 		<div>
 			<button>LP11</button>
@@ -66,6 +65,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['access'] !== 'user') {
 		<button>CP2</button>
 		<button>CP1</button>
 	</div>
-	<a class="logout" href="index.php">Logout</a>
+	<a href="index.php">Logout</a>
 </body>
 </html>

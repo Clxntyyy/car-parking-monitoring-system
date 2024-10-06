@@ -12,17 +12,7 @@ body {
 	background-color: #fbfbfb;
 }
 
-.wrapper {
-	text-align: center;
-}
-
-
-.greet {
-	text-align: center;
-}
-
 .top-container {
-	justify-content: center;
 	margin-bottom: 20%;
 	display: flex;
 	align-items: center;
@@ -56,4 +46,9 @@ body {
 	text-align: center;
 	font-size: 0.875rem;
 	cursor: pointer;
+}
+
+.top-container div button,
+.bottom-container button:hover{
+    background: greenyellow;
 }
