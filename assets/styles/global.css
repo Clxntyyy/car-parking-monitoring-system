@@ -43,9 +43,13 @@ body {
 
 form {
 	font-family: "GeistVF", serif;
+
 	background: var(--background-foreground);
 	border: 1px solid var(--border);
 	border-radius: var(--radius);
+
+	min-width: 22.5rem;
+
 	padding: 1.5rem;
 
 	.form-header {
@@ -59,7 +63,9 @@ form {
 		}
 
 		h1 {
+			/* font-family: "GeistMonoVF", serif; */
 			font-size: 2.5rem;
+
 			margin-bottom: 0.25rem;
 		}
 		h3 {
@@ -72,6 +78,7 @@ form {
 			color: var(--muted);
 			font-size: var(--text-base);
 			line-height: 1.5rem;
+
 			margin-top: 4px;
 		}
 	}
@@ -82,16 +89,19 @@ form {
 			display: block;
 			font-weight: 500;
 			font-size: 0.875rem;
+
 			margin-bottom: 0.5rem;
 		}
 
 		input {
 			font-size: 0.875rem;
 			line-height: 1.25rem;
+
 			background: var(--background);
 			border: 1px solid var(--border);
 			border-radius: calc(var(--radius) - 4px);
 			padding: 0.5rem 0.75rem;
+
 			width: 100%;
 		}
 	}
@@ -99,13 +109,17 @@ form {
 	button {
 		font-size: 0.875rem;
 		line-height: 1.25rem;
+
 		color: #fff;
 		background: #18181b;
 		border: 1px solid var(--border);
 		border-radius: calc(var(--radius) - 2px);
 		padding: 0.5rem 1rem;
+
 		width: 100%;
+
 		cursor: pointer;
+
 		&:hover {
 			background: #18181be1;
 		}
