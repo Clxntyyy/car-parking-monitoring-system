@@ -1,7 +1,8 @@
 <?php
 
-function connection() {
-    
+function connection()
+{
+
     $host = "localhost";
     $username = "root";
     $password = "";
@@ -15,5 +16,3 @@ function connection() {
 
     return $con;
 }
-
-?>

@@ -1,5 +1,0 @@
-{
-  "scripts": {
-    "build:css": "npx tailwindcss -i ./src/assets/styles/input.css -o ./src/assets/styles/output.css"
-  }
-}
