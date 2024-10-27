@@ -3,7 +3,7 @@ session_start();
 include_once(__DIR__ . "/connections/connection.php");
 $con = connection();
 
-if (!isset($_SESSION['user_id']) || $_SESSION['access'] !== 'user') {
+if (!isset($_SESSION['user_id']) || $_SESSION['access_level'] !== 'customer') {
     header("Location: home.php");
     exit();
 }
@@ -32,6 +32,7 @@ while ($row = $parkingResult->fetch_assoc()) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -51,10 +52,10 @@ while ($row = $parkingResult->fetch_assoc()) {
 <body>
     <div class="parking-lot">
         <div class="header">
-            <h1 class="greet">Welcome to ITC Car Parking Monitoring System, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</h1>
+            <h1 class="greet">Welcome to ITC Car Parking Monitoring System, <?php echo htmlspecialchars($_SESSION['fname']); ?>!</h1>
             <a class="logout" href="index.php">Logout</a>
         </div>
-        
+
         <div class="top-container">
             <div class="left-parking">
                 <?php
@@ -91,4 +92,5 @@ while ($row = $parkingResult->fetch_assoc()) {
         </div>
     </div>
 </body>
+
 </html>
