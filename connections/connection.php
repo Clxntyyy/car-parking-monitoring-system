@@ -1,18 +1,19 @@
 <?php
+if (!function_exists('connection')) {
+    function connection() {
+        $host = 'localhost'; // Your database host
+        $user = 'root'; // Your database username
+        $password = ''; // Your database password
+        $database = 'cpms_db'; // Your database name
 
-function connection()
-{
+        $con = new mysqli($host, $user, $password, $database);
 
-    $host = "localhost";
-    $username = "root";
-    $password = "";
-    $database = "carparking_db";
+        // Check connection
+        if ($con->connect_error) {
+            die("Connection failed: " . $con->connect_error);
+        }
 
-    $con = new mysqli($host, $username, $password, $database);
-
-    if ($con->connect_errno) {
-        throw new Exception("Failed to connect to MySQL: " . $con->connect_error);
+        return $con;
     }
-
-    return $con;
 }
+?>

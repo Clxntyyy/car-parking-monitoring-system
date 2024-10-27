@@ -1,91 +1,87 @@
 <?php
-session_start();
+// Include database connection
+include_once 'connections/connection.php';
 
-include_once(__DIR__ . "/connections/connection.php");
-$con = connection();
+// Establish a connection
+$conn = connection();
 
-// Fetch all users from the table (optional for debugging purposes)
-$userSql = "SELECT * FROM tbl_users";
-$stmtUser = $con->prepare($userSql);
-$stmtUser->execute();
-$result = $stmtUser->get_result();
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Retrieve form data and sanitize inputs
+    $fname = trim($_POST['fname']);
+    $lname = trim($_POST['lname']);
+    $contact_no = trim($_POST['contact_no']);
+    $email = trim($_POST['email']);
+    $plate_number = trim($_POST['plate_number']);
 
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-  $name = $_POST['name'];
-  $plate_number = $_POST['pnumber'];
-
-  // Validate user input against the database
-  $loginSql = "SELECT * FROM tbl_users WHERE user_name = ? AND plate_number = ?";
-  $stmtLogin = $con->prepare($loginSql);
-  $stmtLogin->bind_param("ss", $name, $plate_number);
-  $stmtLogin->execute();
-  $loginResult = $stmtLogin->get_result();
-
-  if ($loginResult->num_rows > 0) {
-    // User found, create session
-    $user = $loginResult->fetch_assoc();
-    
-    $_SESSION['user_id'] = $user['user_id'];
-    $_SESSION['user_name'] = $user['user_name'];
-    $_SESSION['access'] = $user['access'];
-
-    if ($user['access'] === 'admin') {
-      header("Location: admin-dashboard.php");
-    } else {
-      header("Location: home.php");
+    // Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "Invalid email format.";
+        exit;
     }
-    exit();
-  } else {
-    echo "<script>alert('Invalid name or plate number!');</script>";
-  }
+
+    // Use `fname` as the username and `plate_number` as the password
+    $username = $fname; // Set `username` as `fname`
+    // Hash the plate number as the password (if needed)
+    // Assuming plate_number is used directly in this case; adjust as necessary.
+    
+    // Prepare an SQL statement for inserting into user_tbl
+    $stmt = $conn->prepare("INSERT INTO user_tbl (fname, lname, contact_no, email, plate_number) 
+                             VALUES (?, ?, ?, ?, ?)");
+    
+    if ($stmt) {
+        // Bind parameters
+        $stmt->bind_param("sssss", $fname, $lname, $contact_no, $email, $plate_number);
+
+        // Execute the statement
+        if ($stmt->execute()) {
+            echo "New record created successfully";
+            // Redirect to login page after successful signup
+            header("Location: login.php");
+            exit();
+        } else {
+            echo "Error: Could not execute query: " . htmlspecialchars($stmt->error);
+        }
+        
+        // Close statement
+        $stmt->close();
+    } else {
+        echo "Error preparing statement: " . htmlspecialchars($conn->error);
+    }
 }
+
+// Close connection
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="./assets/styles/global.css" />
-  <title>CPMS — User Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
 </head>
-
 <body>
-  <div class="wrapper">
-    <form action="" method="post">
-      <div class="form-header">
-        <img src="./assets/images/logo.jpg" alt="cpms-logo" width="60" height="60" />
-        <div>
-          <h3>CPMS — Login</h3>
-          <p>Enter your name and license plate number</p>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="name">Name</label>
-        <input type="text" name="name" id="name" required />
-      </div>
-      <div class="form-group">
-        <label for="pnumber">Plate Number</label>
-        <input type="text" name="pnumber" id="pnumber" placeholder="1234-ABCD" required />
-      </div>
-      <button type="submit">Login</button>
-      <p style="text-align:center; margin-top:1rem;">
-        <a href="signup.php">Sign up for new user</a>
-      </p>
+    <h2>Sign Up</h2>
+    <form action="signup.php" method="post">
+        <label for="fname">First Name:</label>
+        <input type="text" id="fname" name="fname" required><br><br>
+
+        <label for="lname">Last Name:</label>
+        <input type="text" id="lname" name="lname" required><br><br>
+
+        <label for="contact_no">Contact Number:</label>
+        <input type="text" id="contact_no" name="contact_no" required><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="plate_number">Plate Number:</label>
+        <input type="text" id="plate_number" name="plate_number" required><br><br>
+
+        <input type="submit" value="Sign Up">
     </form>
 
-    <!-- Display all users for debugging (optional) -->
-    <!-- <div class="users-list">
-            <h4>Registered Users:</h4>
-            <ul>
-                <?php while ($user = $result->fetch_assoc()) { ?>
-                    <li><?php echo $user['user_name'] . " - " . $user['plate_number']; ?></li>
-                <?php } ?>
-            </ul>
-        </div> -->
-  </div>
+    <p>Do you have an account? <a href="login.php"><button>Log In</button></a></p>
 </body>
-
 </html>
