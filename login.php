@@ -21,13 +21,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows > 0) {
         // User found, now verify the password (assuming plate_number is stored as plain text)
         $user = $result->fetch_assoc();
-        
+
         // Check if plate_number matches the stored value
-        if ($plate_number === $user['plate_number']) { 
+        if ($plate_number === $user['plate_number']) {
             // Set session variables
             $_SESSION['logged_in'] = true;
             $_SESSION['fname'] = $user['fname'];
-            $_SESSION['role'] = $user['access_level']; // Adjust according to your table structure
+            $_SESSION['role'] = $user['access_level'];
+            $_SESSION['user_id'] = $user['id'];
 
             // Redirect based on role
             if ($user['access_level'] == 'admin') {
@@ -51,11 +52,14 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <title>Log In</title>
 </head>
+
 <body>
     <h2>Log In</h2>
     <form action="login.php" method="post">
@@ -70,5 +74,9 @@ $conn->close();
 
     <!-- Link to go back to Sign Up -->
     <p>Don't have an account? <a href="index.php">Sign Up</a></p>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>
