@@ -1,0 +1,23 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("../fonts/GeistVF.woff");
+}
+
+@font-face {
+  font-family: "GeistMono";
+  src: url("../fonts/GeistMonoVF.woff");
+}
+
+body {
+  font-family: 'Geist', sans-serif;
+}
+
+.geist-mono {
+  font-family: 'GeistMono', serif;
+}

@@ -11,11 +11,13 @@ $(document).ready(function () {
 		modal.find('input[name="status"][value="' + status + '"]').prop("checked", true)
 		modal.find("#userId").val(userId)
 
-		// Disable user select if status is available
+		// Disable user select and save button if status is available
 		if (status === "available") {
 			modal.find("#userId").prop("disabled", true)
+			modal.find("#saveChanges").prop("disabled", true)
 		} else {
 			modal.find("#userId").prop("disabled", false)
+			modal.find("#saveChanges").prop("disabled", false)
 		}
 	})
 
@@ -51,8 +53,10 @@ $(document).ready(function () {
 		let status = $(this).val()
 		if (status === "available") {
 			$("#userId").prop("disabled", true).val("")
+			$("#saveChanges").prop("disabled", true)
 		} else {
 			$("#userId").prop("disabled", false)
+			$("#saveChanges").prop("disabled", false)
 		}
 	})
 
