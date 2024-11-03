@@ -1,3 +1,53 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Database connection
+    $conn = new mysqli("localhost", "username", "password", "database_name");
+
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Get ticket details from the database
+    $ticket_id = $_POST['ticket_id'];
+    $sql = "SELECT license_plate, slot_number, entry_time, exit_time FROM violations WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $ticket_id);
+    $stmt->execute();
+    $stmt->bind_result($license_plate, $slot_number, $entry_time, $exit_time);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Calculate overstay duration and fine
+    $overstay_duration = (strtotime($exit_time) - strtotime($entry_time)) / 3600; // in hours
+    $fine_amount = ceil($overstay_duration) * 100; // 100 PHP per hour
+
+    // Prepare email details
+    $to = $_POST['email'];
+    $subject = "Parking Violation Ticket";
+    $message = file_get_contents('ticket.php');
+    
+    // Replace placeholders in the email template with dynamic values
+    $message = str_replace(
+        ['{{license_plate}}', '{{slot_number}}', '{{entry_time}}', '{{exit_time}}', '{{overstay_duration}}', '{{fine_amount}}'],
+        [$license_plate, $slot_number, $entry_time, $exit_time, $overstay_duration . ' hours', '₱' . number_format($fine_amount, 2)],
+        $message
+    );
+
+    // Send email
+    $headers = "MIME-Version: 1.0" . "\r\n";
+    $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+    $headers .= 'From: no-reply@parkingmonitoring.com' . "\r\n";
+
+    if (mail($to, $subject, $message, $headers)) {
+        echo "Ticket sent successfully.";
+    } else {
+        echo "Failed to send ticket.";
+    }
+
+    $conn->close();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,36 +184,19 @@
     </div>
     
     <div class="ticket-body">
-        <div class="violation-details">
-            <h3>License Plate: ABC1234</h3>
-            <p>Slot Number: Main Street Parking Lot</p>
-            <p>Date: October 22, 2024</p>
-            <p>Entry Time: 10:00 AM</p>
-            <p>Exit Time: 4:30 PM</p>
-        </div>
-
-        <div class="fine-details">
-            <p><strong>Overstay Duration:</strong> 1 hour 30 minutes</p>
-            <p><strong>Fine Amount:</strong> ₱100.00</p>
-        </div>
+    <div class="violation-details">
+        <h3>License Plate: {{license_plate}}</h3> 
+        <p>Slot Number: {{slot_number}}</p>
+        <p>Date: {{entry_time}}</p>
+        <p>Entry Time: {{entry_time}}</p> 
+        <p>Exit Time: {{exit_time}}</p> 
     </div>
 
-    <div class="ticket-footer">
-        <div class="ticket-number">
-            <span>Ticket No:</span>
-            <span>00123456</span>
-        </div>
-        <div class="qr-section">
-            <p class="pay">PAY HERE:</p>
-            <div class="qr-code">
-                <img src="assets/images/payment.jpg" alt="QR Code">
-            </div>
-        </div>
+    <div class="fine-details">
+        <p><strong>Overstay Duration:</strong> {{overstay_duration}}</p> 
+        <p><strong>Fine Amount:</strong> {{fine_amount}}</p>
     </div>
-
-    <div class="note">
-        Please note that the fine must be paid within 10 days to avoid any further complications.
-    </div>
+</div>
 </div>
 
 </body>

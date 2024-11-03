@@ -6,7 +6,7 @@ include_once 'components/nav.php';
 
 $conn = connection();
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['logged_in']) || $_SESSION['access_level'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
@@ -135,7 +135,7 @@ $result = $conn->query($sql);
                                         <td>{$row['lname']}</td>
                                         <td class='geist-mono'>{$row['plate_number']}</td>
                                         <td>" . ($row['ticket_id'] ? "<span class='badge badge-danger'>Issued</span>" : "<span class='badge badge-success'>No Ticket</span>") . "</td>
-                                        <td><button class='btn btn-primary'>Print Ticket</button></td>
+                                        <td><button class='btn btn-primary'>Send Ticket</button></td>
                                         <td>" . ($row['payment_id'] ? 'Paid' : 'Unpaid') . "</td>
                                       </tr>";
                             }
