@@ -40,6 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['email'] = $user['email'];
             $_SESSION['access_level'] = $user['access_level'];
             $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['staff_id'] = $user['user_id'];
 
             // Redirect based on role
             switch ($user['access_level']) {

@@ -1,27 +1,28 @@
 <?php
 session_start();
 
-session_start();
 include_once 'connections/connection.php';
+
+$conn = connection();
 
 if (!isset($_SESSION['staff_id'])) {
     header("Location: login.php");
     exit();
 }
 
-$conn = new mysqli("localhost", "username", "password", "database_name");
-
-$sql = "SELECT id, license_plate, slot_number, entry_time, exit_time, overstay_duration, fine_amount, is_paid, paid_at FROM tickets";
+$sql = "SELECT * FROM ticket_tbl";
 $result = $conn->query($sql);
 
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Staff Dashboard - Payment Monitoring</title>
 </head>
+
 <body>
     <h2>Parking Violation Tickets - Payment Status</h2>
     <table border="1">
@@ -63,6 +64,7 @@ $result = $conn->query($sql);
         <?php endwhile; ?>
     </table>
 </body>
+
 </html>
 
 <?php
