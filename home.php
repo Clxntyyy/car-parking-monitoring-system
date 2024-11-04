@@ -4,12 +4,12 @@ include_once 'connections/connection.php';
 
 $con = connection();
 
-if (!isset($_SESSION['user_id']) || $_SESSION['access_level'] !== 'customer') {
+if (!isset($_SESSION['user']['user_id']) || $_SESSION['user']['access_level'] !== 'customer') {
     header("Location: home.php");
     exit();
 }
 
-$id = $_SESSION['user_id'] ?? NULL;
+$id = $_SESSION['user']['user_id'] ?? NULL;
 
 if ($id) {
     // Fetch user details
@@ -87,7 +87,7 @@ function renderParkingSlots($parkingSlots, $prefix, $userId)
 <body>
     <div class="p-4">
         <h1>Map</h1>
-        <p>Welcome, <?php echo htmlspecialchars($_SESSION['fname']); ?>!</p>
+        <p>Welcome, <?php echo htmlspecialchars($_SESSION['user']['fname']); ?>!</p>
         <div class="map-wrapper">
             <div class="motor-parking">
                 <?php renderParkingSlots($parkingSlots, 'MP', $id); ?>

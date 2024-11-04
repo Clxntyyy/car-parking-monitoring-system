@@ -5,7 +5,7 @@ include_once 'connections/connection.php';
 
 $conn = connection();
 
-if (!isset($_SESSION['staff_id'])) {
+if (!isset($_SESSION['user']['staff_id'])) {
     header("Location: login.php");
     exit();
 }

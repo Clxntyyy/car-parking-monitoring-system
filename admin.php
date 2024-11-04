@@ -6,7 +6,7 @@ include_once 'components/nav.php';
 
 $conn = connection();
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['access_level'] !== 'admin') {
+if (!isset($_SESSION['logged_in']) || $_SESSION['user']['access_level'] !== 'admin') {
     header("Location: login.php");
     exit();
 }

@@ -110,6 +110,7 @@ adminModal($filteredUsers);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles/map.css">
+  <link rel="stylesheet" href="assets/styles/global.css">
   <title>Map</title>
 </head>
 
@@ -117,7 +118,7 @@ adminModal($filteredUsers);
   <?php nav(); ?>
   <div class="p-4">
     <h1>Map</h1>
-    <p>Welcome, <?php echo htmlspecialchars($_SESSION['fname']); ?>!</p>
+    <p>Welcome, <?php echo htmlspecialchars($_SESSION['user']['fname']); ?>!</p>
     <div class="map-wrapper">
       <div class="motor-parking">
         <?php renderParkingSlots($parkingSlots, 'MP'); ?>

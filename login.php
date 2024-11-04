@@ -34,13 +34,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($result_vehicle->num_rows > 0) {
             // Plate number matches, set session variables
             $_SESSION['logged_in'] = true;
-            $_SESSION['fname'] = $user['fname'];
-            $_SESSION['lname'] = $user['lname'];
-            $_SESSION['contact_no'] = $user['contact_no'];
-            $_SESSION['email'] = $user['email'];
-            $_SESSION['access_level'] = $user['access_level'];
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['staff_id'] = $user['user_id'];
+            $_SESSION['user'] = [
+                'fname' => $user['fname'],
+                'lname' => $user['lname'],
+                'contact_no' => $user['contact_no'],
+                'email' => $user['email'],
+                'access_level' => $user['access_level'],
+                'user_id' => $user['user_id'],
+                'staff_id' => $user['user_id']
+            ];
 
             // Redirect based on role
             switch ($user['access_level']) {
