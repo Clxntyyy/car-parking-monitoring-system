@@ -15,19 +15,23 @@ $slotStatusSql = "SELECT COUNT(CASE WHEN status = 'available' THEN 1 END) AS ava
 $slotStatusResult = $conn->query($slotStatusSql);
 $slotStatus = $slotStatusResult->fetch_assoc();
 
-$unpaidTicketsSql = "SELECT COUNT(*) AS unpaid_tickets FROM ticket_tbl WHERE ticket_id NOT IN (SELECT ticket_id FROM payment_tbl)";
-$unpaidTicketsResult = $conn->query($unpaidTicketsSql);
-$unpaidTickets = $unpaidTicketsResult->fetch_assoc();
-
 $filter = isset($_POST['filter']) ? $_POST['filter'] : 'all';
 $sortColumn = isset($_POST['sortColumn']) ? $_POST['sortColumn'] : 'fname';
 $sortOrder = isset($_POST['sortOrder']) ? $_POST['sortOrder'] : 'ASC';
 
-$sql = "SELECT u.user_id, u.fname, u.lname, v.plate_number, t.ticket_id, p.payment_id
+$sql = "SELECT u.user_id, 
+                u.fname, 
+                u.lname, 
+                v.plate_number, 
+                t.ticket_id, 
+                t.is_overtime, 
+                p.payment_id,
+                ps.status AS parking_status
         FROM user_tbl u
         LEFT JOIN vehicle_tbl v ON u.user_id = v.user_id
         LEFT JOIN ticket_tbl t ON u.user_id = t.user_id
         LEFT JOIN payment_tbl p ON t.ticket_id = p.ticket_id
+        LEFT JOIN parkingslots_tbl ps ON u.user_id = ps.user_id
         WHERE u.access_level = 'customer'";
 
 switch ($filter) {
@@ -45,6 +49,22 @@ switch ($filter) {
 $sql .= " ORDER BY $sortColumn $sortOrder";
 
 $result = $conn->query($sql);
+
+if (isset($_POST['action']) && $_POST['action'] === 'update_overtime') {
+    if (!isset($_SESSION['logged_in']) || $_SESSION['user']['access_level'] !== 'admin') {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit;
+    }
+
+    $ticket_id = $_POST['ticket_id'];
+    $sql = "UPDATE ticket_tbl SET is_overtime = 1 WHERE ticket_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $ticket_id);
+    $success = $stmt->execute();
+
+    echo json_encode(['success' => $success]);
+    exit;
+}
 
 ?>
 
@@ -123,7 +143,6 @@ $result = $conn->query($sql);
                             <th scope="col">Plate Number</th>
                             <th scope="col">Ticket</th>
                             <th scope="col">Action</th>
-                            <th scope="col">Status</th>
                         </tr>
                     </thead>
                     <tbody id="userTable">
@@ -134,10 +153,22 @@ $result = $conn->query($sql);
                                         <td>{$row['fname']}</td>
                                         <td>{$row['lname']}</td>
                                         <td class='geist-mono'>{$row['plate_number']}</td>
-                                        <td>" . ($row['ticket_id'] ? "<span class='badge badge-danger'>Issued</span>" : "<span class='badge badge-success'>No Ticket</span>") . "</td>
-                                        <td><button class='btn btn-primary'>Send Ticket</button></td>
-                                        <td>" . ($row['payment_id'] ? 'Paid' : 'Unpaid') . "</td>
-                                      </tr>";
+                                        <td id='ticket-status-{$row['ticket_id']}'>" .
+                                    ($row['is_overtime'] == 1 ?
+                                        "<span class='badge badge-danger'>Issued</span>" :
+                                        "<span class='badge badge-success'>No Ticket</span>") .
+                                    "</td>
+                                    <td>" .
+                                    (
+                                        empty($row['parking_status']) ? // User not parked
+                                        "<button class='btn btn-secondary' disabled>Not Parked</button>" : // Disabled button
+                                        ($row['is_overtime'] == 1 ?
+                                            "<button class='btn btn-primary' disabled>Ticket Sent</button>" :
+                                            "<button class='btn btn-primary send-ticket' data-ticket-id='{$row['ticket_id']}'>Send Ticket</button>"
+                                        )
+                                    ) .
+                                    "</td>
+                                    </tr>";
                             }
                         } else {
                             echo "<tr><td colspan='7' class='text-center'>No users found</td></tr>";
@@ -179,10 +210,10 @@ $result = $conn->query($sql);
             const slotChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Available', 'Occupied', 'Unpaid Tickets'],
+                    labels: ['Available', 'Occupied'],
                     datasets: [{
-                        data: [<?php echo $slotStatus['available']; ?>, <?php echo $slotStatus['occupied']; ?>, <?php echo $unpaidTickets['unpaid_tickets']; ?>],
-                        backgroundColor: ['#45A557', '#E5484D', '#FFB224'],
+                        data: [<?php echo $slotStatus['available']; ?>, <?php echo $slotStatus['occupied']; ?>],
+                        backgroundColor: ['#45A557', '#E5484D'],
                     }]
                 },
                 options: {
@@ -195,6 +226,36 @@ $result = $conn->query($sql);
                         animateScale: true,
                         animateRotate: true
                     }
+                }
+            });
+        });
+        // Add ticket update handler
+        $(document).on('click', '.send-ticket', function() {
+            const btn = $(this);
+            const ticketId = btn.data('ticket-id');
+
+            $.ajax({
+                url: 'admin.php',
+                method: 'POST',
+                data: {
+                    action: 'update_overtime',
+                    ticket_id: ticketId
+                },
+                success: function(response) {
+                    const result = JSON.parse(response);
+                    if (result.success) {
+                        // Update status badge
+                        $(`#ticket-status-${ticketId}`).html(
+                            '<span class="badge badge-danger">Issued</span>'
+                        );
+                        // Update button
+                        btn.prop('disabled', true).text('Ticket Sent');
+                    } else {
+                        alert('Failed to update ticket status');
+                    }
+                },
+                error: function() {
+                    alert('Error updating ticket');
                 }
             });
         });

@@ -39,30 +39,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $status = $_POST['status'];
   $userId = $_POST['user_id'] ?: null;
 
-  // Get the vehicle ID based on the user ID
-  $vehicleId = null;
-  if ($userId) {
+  if ($status === 'occupied' && $userId) {
+    // Get vehicle_id for the user
     $vehicleQuery = "SELECT vehicle_id FROM vehicle_tbl WHERE user_id = ?";
     $stmtVehicle = $conn->prepare($vehicleQuery);
-    $stmtVehicle->bind_param('i', $userId);
+    $stmtVehicle->bind_param("i", $userId);
     $stmtVehicle->execute();
     $vehicleResult = $stmtVehicle->get_result();
-    if ($vehicleRow = $vehicleResult->fetch_assoc()) {
-      $vehicleId = $vehicleRow['vehicle_id'];
+    $vehicle = $vehicleResult->fetch_assoc();
+
+    // Get parking slot ID
+    $slotQuery = "SELECT pslot_id FROM parkingslots_tbl WHERE slot_number = ?";
+    $stmtSlot = $conn->prepare($slotQuery);
+    $stmtSlot->bind_param("s", $slotNumber);
+    $stmtSlot->execute();
+    $slotResult = $stmtSlot->get_result();
+    $slot = $slotResult->fetch_assoc();
+
+    // Begin transaction
+    $conn->begin_transaction();
+
+    try {
+      // Update parking slot
+      $updateSlot = "UPDATE parkingslots_tbl SET status = ?, user_id = ?, vehicle_id = ? WHERE slot_number = ?";
+      $stmtUpdate = $conn->prepare($updateSlot);
+      $stmtUpdate->bind_param("siis", $status, $userId, $vehicle['vehicle_id'], $slotNumber);
+      $stmtUpdate->execute();
+
+      // Create ticket
+      $ticketNo = 'ITC-' . date('Ymd') . sprintf('%04d', rand(1, 9999));
+      $insertTicket = "INSERT INTO ticket_tbl (ticket_no, entry_time, is_overtime, user_id, pslot_id, vehicle_id) 
+                          VALUES (?, NOW(), 0, ?, ?, ?)";
+      $stmtTicket = $conn->prepare($insertTicket);
+      $stmtTicket->bind_param("siii", $ticketNo, $userId, $slot['pslot_id'], $vehicle['vehicle_id']);
+      $stmtTicket->execute();
+
+      $conn->commit();
+      echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+      $conn->rollback();
+      echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+  } elseif ($status === 'available') {
+    // Begin transaction
+    $conn->begin_transaction();
+
+    try {
+      // Get current ticket for this slot
+      $ticketQuery = "SELECT t.ticket_id 
+                         FROM ticket_tbl t 
+                         JOIN parkingslots_tbl ps ON t.pslot_id = ps.pslot_id 
+                         WHERE ps.slot_number = ? AND t.exit_time IS NULL";
+      $stmtTicket = $conn->prepare($ticketQuery);
+      $stmtTicket->bind_param("s", $slotNumber);
+      $stmtTicket->execute();
+      $ticketResult = $stmtTicket->get_result();
+      $ticket = $ticketResult->fetch_assoc();
+
+      // Update ticket with exit time
+      if ($ticket) {
+        $updateTicket = "UPDATE ticket_tbl SET exit_time = NOW() WHERE ticket_id = ?";
+        $stmtUpdateTicket = $conn->prepare($updateTicket);
+        $stmtUpdateTicket->bind_param("i", $ticket['ticket_id']);
+        $stmtUpdateTicket->execute();
+      }
+
+      // Update parking slot
+      $updateSlot = "UPDATE parkingslots_tbl SET status = ?, user_id = NULL, vehicle_id = NULL WHERE slot_number = ?";
+      $stmtUpdate = $conn->prepare($updateSlot);
+      $stmtUpdate->bind_param("ss", $status, $slotNumber);
+      $stmtUpdate->execute();
+
+      $conn->commit();
+      echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+      $conn->rollback();
+      echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
   }
-
-  // Update the slot in the database
-  $updateQuery = "UPDATE parkingslots_tbl SET status = ?, vehicle_id = ?, user_id = ? WHERE slot_number = ?";
-  $stmt = $conn->prepare($updateQuery);
-  $stmt->bind_param('siis', $status, $vehicleId, $userId, $slotNumber);
-  $stmt->execute();
-
-  if ($stmt->affected_rows > 0) {
-    echo 'Success';
-  } else {
-    echo 'Failed';
-  }
+  exit();
 }
 
 function renderParkingSlots($parkingSlots, $prefix)
@@ -118,7 +173,7 @@ adminModal($filteredUsers);
   <?php nav(); ?>
   <div class="p-4">
     <h1>Map</h1>
-    <p>Welcome, <?php echo htmlspecialchars($_SESSION['user']['fname']); ?>!</p>
+    <p>Welcome, <?php echo htmlspecialchars($_SESSION['user']['fname']); ?>! <a href="logout.php">Log out</a></p>
     <div class="map-wrapper">
       <div class="motor-parking">
         <?php renderParkingSlots($parkingSlots, 'MP'); ?>
