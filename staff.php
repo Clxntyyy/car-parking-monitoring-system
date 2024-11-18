@@ -29,7 +29,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_overtime') {
             $amount = $hours * 100;
             $data[] = [
                 'ticket_id' => $row['ticket_id'],
-                'overtime' => $interval->format('%h hours %i minutes'),
+                'overtime' => $interval->format('%h hour/s %i minute/s'),
                 'amount' => $amount
             ];
         } else {
@@ -46,19 +46,39 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_overtime') {
     exit();
 }
 
-// Fetch initial table data
 $query = "
 SELECT 
     t.ticket_id, t.ticket_no, t.entry_time, t.exit_time, t.is_overtime, 
     t.user_id, t.pslot_id, t.vehicle_id,
-    u.*
+    u.*,
+    CASE WHEN p.payment_id IS NOT NULL THEN 'Paid' ELSE 'Unpaid' END as payment_status,
+    p.payment_method,
+    p.payment_date
 FROM 
     ticket_tbl t
 JOIN 
     user_tbl u ON t.user_id = u.user_id
+LEFT JOIN 
+    payment_tbl p ON t.ticket_id = p.ticket_id
 ";
 $result = $conn->query($query);
+
+if (isset($_POST['action']) && $_POST['action'] === 'process_payment') {
+    $ticket_id = $_POST['ticket_id'];
+    $user_id = $_POST['user_id'];
+    $amount = $_POST['amount'];
+    $payment_method = $_POST['payment_method'];
+
+    $sql = "INSERT INTO payment_tbl (ticket_id, user_id, amount_paid, payment_method) 
+            VALUES (?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iids", $ticket_id, $user_id, $amount, $payment_method);
+
+    echo json_encode(['success' => $stmt->execute()]);
+    exit();
+}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -71,23 +91,25 @@ $result = $conn->query($query);
     <title>Staff Dashboard - Payment Monitoring</title>
 </head>
 
-<body>
-    <h2>Parking Violation Tickets - Payment Status</h2>
+<body class="p-4">
+    <h1>Parking Violation Tickets - Payment Status</h1>
     <table class="table table-striped table-hover w-100 border shadow-sm">
         <thead>
             <tr>
-                <th scope="col">Ticket ID</th>
+                <th scope="col">Ticket</th>
                 <th scope="col">User Name</th>
                 <th scope="col">Email</th>
                 <th scope="col">Phone Number</th>
                 <th scope="col">Time Overstayed</th>
                 <th scope="col">Amount</th>
+                <th scope="col">Status</th>
+                <th scope="col">Action</th>
             </tr>
         </thead>
         <tbody>
             <?php while ($row = $result->fetch_assoc()): ?>
                 <tr>
-                    <td><?php echo $row['ticket_id']; ?></td>
+                    <td><?php echo $row['ticket_no']; ?></td>
                     <td><?php echo $row['fname'] . ' ' . $row['lname']; ?></td>
                     <td><?php echo $row['email']; ?></td>
                     <td><?php echo $row['contact_no']; ?></td>
@@ -123,6 +145,28 @@ $result = $conn->query($query);
                         }
                         ?>
                     </td>
+                    <?php
+                    echo "<td>" .
+                        ($row['payment_status'] === 'Paid' ?
+                            "<span class='badge badge-success'>Paid</span>" :
+                            "<span class='badge badge-warning'>Unpaid</span>") .
+                        "</td>";
+                    ?>
+                    <td>
+                        <?php if ($row['payment_status'] === 'Unpaid'): ?>
+                            <button
+                                class="btn btn-primary btn-sm process-payment"
+                                data-ticket-id="<?php echo $row['ticket_id']; ?>"
+                                data-user-id="<?php echo $row['user_id']; ?>"
+                                data-amount="<?php echo $amount; ?>">
+                                Process Payment
+                            </button>
+                        <?php else: ?>
+                            <span class="badge badge-success">
+                                Paid via <?php echo ucfirst($row['payment_method']); ?>
+                            </span>
+                        <?php endif; ?>
+                    </td>
                 </tr>
             <?php endwhile; ?>
         </tbody>
@@ -149,6 +193,46 @@ $result = $conn->query($query);
 
         setInterval(updateOvertime, 60000); // Update overtime and amount every 60 seconds
         updateOvertime();
+
+        $(document).ready(function() {
+            $('.process-payment').click(function() {
+                const btn = $(this);
+                const ticketId = btn.data('ticket-id');
+                const userId = btn.data('user-id');
+                const amount = btn.data('amount');
+
+                // Show payment method selection
+                const paymentMethod = prompt('Enter payment method (cash/gcash):').toLowerCase();
+
+                if (paymentMethod !== 'cash' && paymentMethod !== 'gcash') {
+                    alert('Invalid payment method. Please enter either cash or gcash.');
+                    return;
+                }
+
+                $.ajax({
+                    url: 'staff.php',
+                    method: 'POST',
+                    data: {
+                        action: 'process_payment',
+                        ticket_id: ticketId,
+                        user_id: userId,
+                        amount: amount,
+                        payment_method: paymentMethod
+                    },
+                    success: function(response) {
+                        const result = JSON.parse(response);
+                        if (result.success) {
+                            location.reload(); // Refresh to show updated status
+                        } else {
+                            alert('Payment processing failed');
+                        }
+                    },
+                    error: function() {
+                        alert('Error processing payment');
+                    }
+                });
+            });
+        });
     </script>
 </body>
 

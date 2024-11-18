@@ -173,7 +173,7 @@ adminModal($filteredUsers);
   <?php nav(); ?>
   <div class="p-4">
     <h1>Map</h1>
-    <p>Welcome, <?php echo htmlspecialchars($_SESSION['user']['fname']); ?>!</p>
+    <p>Welcome, <?php echo htmlspecialchars($_SESSION['user']['fname']); ?>! <a href="logout.php">Log out</a></p>
     <div class="map-wrapper">
       <div class="motor-parking">
         <?php renderParkingSlots($parkingSlots, 'MP'); ?>
