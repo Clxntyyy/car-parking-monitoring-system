@@ -23,7 +23,13 @@ $filter = isset($_POST['filter']) ? $_POST['filter'] : 'all';
 $sortColumn = isset($_POST['sortColumn']) ? $_POST['sortColumn'] : 'fname';
 $sortOrder = isset($_POST['sortOrder']) ? $_POST['sortOrder'] : 'ASC';
 
-$sql = "SELECT u.user_id, u.fname, u.lname, v.plate_number, t.ticket_id, p.payment_id
+$sql = "SELECT u.user_id, 
+                u.fname, 
+                u.lname, 
+                v.plate_number, 
+                t.ticket_id, 
+                t.is_overtime, 
+                p.payment_id
         FROM user_tbl u
         LEFT JOIN vehicle_tbl v ON u.user_id = v.user_id
         LEFT JOIN ticket_tbl t ON u.user_id = t.user_id
@@ -134,7 +140,7 @@ $result = $conn->query($sql);
                                         <td>{$row['fname']}</td>
                                         <td>{$row['lname']}</td>
                                         <td class='geist-mono'>{$row['plate_number']}</td>
-                                        <td>" . ($row['ticket_id'] ? "<span class='badge badge-danger'>Issued</span>" : "<span class='badge badge-success'>No Ticket</span>") . "</td>
+                                        <td>" . ($row['is_overtime'] == 1 ? "<span class='badge badge-danger'>Issued</span>" : "<span class='badge badge-success'>No Ticket</span>") . "</td>
                                         <td><button class='btn btn-primary'>Send Ticket</button></td>
                                         <td>" . ($row['payment_id'] ? 'Paid' : 'Unpaid') . "</td>
                                       </tr>";
