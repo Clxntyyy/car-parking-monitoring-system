@@ -160,9 +160,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'update_overtime') {
                                     "</td>
                                     <td>" .
                                     (
-                                        empty($row['parking_status']) ? // User not parked
-                                        "<button class='btn btn-secondary' disabled>Not Parked</button>" : // Disabled button
-                                        ($row['is_overtime'] == 1 ?
+                                        empty($row['parking_status']) ?
+                                        "<button class='btn btn-secondary' disabled>Not Parked</button>" : ($row['is_overtime'] == 1 ?
                                             "<button class='btn btn-primary' disabled>Ticket Sent</button>" :
                                             "<button class='btn btn-primary send-ticket' data-ticket-id='{$row['ticket_id']}'>Send Ticket</button>"
                                         )

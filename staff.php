@@ -4,7 +4,7 @@ include_once 'connections/connection.php';
 
 $conn = connection();
 
-if (!isset($_SESSION['user']['staff_id'])) {
+if (!isset($_SESSION['logged_in']) || $_SESSION['user']['access_level'] !== 'staff') {
     header("Location: login.php");
     exit();
 }
@@ -13,18 +13,15 @@ date_default_timezone_set('Asia/Manila');
 
 // In the AJAX handler section (around line 15), modify to include amount:
 if (isset($_GET['action']) && $_GET['action'] === 'get_overtime') {
-    $query = "SELECT ticket_id, entry_time FROM ticket_tbl";
+    $query = "SELECT ticket_id, entry_time, is_overtime FROM ticket_tbl";
     $result = $conn->query($query);
 
     $data = [];
     while ($row = $result->fetch_assoc()) {
-        $entry_time = new DateTime($row['entry_time']);
-        $threshold_time = clone $entry_time;
-        $threshold_time->modify('+1 hour');
-        $current_time = new DateTime();
-
-        if ($current_time > $threshold_time) {
-            $interval = $threshold_time->diff($current_time);
+        if ($row['is_overtime']) {
+            $entry_time = new DateTime($row['entry_time']);
+            $current_time = new DateTime();
+            $interval = $entry_time->diff($current_time);
             $hours = $interval->h + $interval->days * 24;
             $amount = $hours * 100;
             $data[] = [
@@ -46,8 +43,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_overtime') {
     exit();
 }
 
-$query = "
-SELECT 
+$query = "SELECT 
     t.ticket_id, t.ticket_no, t.entry_time, t.exit_time, t.is_overtime, 
     t.user_id, t.pslot_id, t.vehicle_id,
     u.*,
@@ -115,13 +111,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'process_payment') {
                     <td><?php echo $row['contact_no']; ?></td>
                     <td id="overtime-<?php echo $row['ticket_id']; ?>">
                         <?php
-                        $entry_time = new DateTime($row['entry_time']);
-                        $threshold_time = clone $entry_time;
-                        $threshold_time->modify('+1 hour');
-                        $current_time = new DateTime();
-
-                        if ($current_time > $threshold_time) {
-                            $interval = $threshold_time->diff($current_time);
+                        if ($row['is_overtime']) {
+                            $entry_time = new DateTime($row['entry_time']);
+                            $current_time = new DateTime();
+                            $interval = $entry_time->diff($current_time);
                             echo $interval->format('%h hours %i minutes');
                         } else {
                             echo 'No overtime';
@@ -130,13 +123,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'process_payment') {
                     </td>
                     <td id="amount-<?php echo $row['ticket_id']; ?>">
                         <?php
-                        $entry_time = new DateTime($row['entry_time']);
-                        $threshold_time = clone $entry_time;
-                        $threshold_time->modify('+1 hour');
-                        $current_time = new DateTime();
-
-                        if ($current_time > $threshold_time) {
-                            $interval = $threshold_time->diff($current_time);
+                        if ($row['is_overtime']) {
+                            $entry_time = new DateTime($row['entry_time']);
+                            $current_time = new DateTime();
+                            $interval = $entry_time->diff($current_time);
                             $hours = $interval->h + ($interval->days * 24);
                             $amount = $hours * 100;
                             echo '₱' . number_format($amount, 2);
@@ -147,13 +137,13 @@ if (isset($_POST['action']) && $_POST['action'] === 'process_payment') {
                     </td>
                     <?php
                     echo "<td>" .
-                        ($row['payment_status'] === 'Paid' ?
+                        (isset($row['payment_id']) && $row['payment_id'] ?
                             "<span class='badge badge-success'>Paid</span>" :
                             "<span class='badge badge-warning'>Unpaid</span>") .
                         "</td>";
                     ?>
                     <td>
-                        <?php if ($row['payment_status'] === 'Unpaid'): ?>
+                        <?php if (!isset($row['payment_id']) || !$row['payment_id']): ?>
                             <button
                                 class="btn btn-primary btn-sm process-payment"
                                 data-ticket-id="<?php echo $row['ticket_id']; ?>"

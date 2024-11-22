@@ -9,23 +9,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Get ticket details from the database
     $ticket_id = $_POST['ticket_id'];
-    $sql = "SELECT license_plate, slot_number, entry_time, exit_time FROM violations WHERE id = ?";
+    $sql = "SELECT license_plate, slot_number, entry_time, exit_time, is_overtime FROM ticket_tbl WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $ticket_id);
     $stmt->execute();
-    $stmt->bind_result($license_plate, $slot_number, $entry_time, $exit_time);
+    $stmt->bind_result($license_plate, $slot_number, $entry_time, $exit_time, $is_overtime);
     $stmt->fetch();
     $stmt->close();
 
-    // Calculate overstay duration and fine
-    $overstay_duration = (strtotime($exit_time) - strtotime($entry_time)) / 3600; // in hours
-    $fine_amount = ceil($overstay_duration) * 100; // 100 PHP per hour
+    // Calculate overstay duration and fine if is_overtime is true
+    if ($is_overtime) {
+        $overstay_duration = ($exit_time->getTimestamp() - $entry_time->getTimestamp()) / 3600; // in hours
+        $fine_amount = ceil($overstay_duration) * 100; // 100 PHP per hour
+    } else {
+        $overstay_duration = 0;
+        $fine_amount = 0;
+    }
 
     // Prepare email details
     $to = $_POST['email'];
     $subject = "Parking Violation Ticket";
     $message = file_get_contents('ticket.php');
-    
+
     // Replace placeholders in the email template with dynamic values
     $message = str_replace(
         ['{{license_plate}}', '{{slot_number}}', '{{entry_time}}', '{{exit_time}}', '{{overstay_duration}}', '{{fine_amount}}'],
@@ -50,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -176,28 +182,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     </style>
 </head>
+
 <body>
 
-<div class="ticket">
-    <div class="ticket-header">
-        <h2>Parking Violation Notice</h2>
-    </div>
-    
-    <div class="ticket-body">
-    <div class="violation-details">
-        <h3>License Plate: {{license_plate}}</h3> 
-        <p>Slot Number: {{slot_number}}</p>
-        <p>Date: {{entry_time}}</p>
-        <p>Entry Time: {{entry_time}}</p> 
-        <p>Exit Time: {{exit_time}}</p> 
-    </div>
+    <div class="ticket">
+        <div class="ticket-header">
+            <h2>Parking Violation Notice</h2>
+        </div>
 
-    <div class="fine-details">
-        <p><strong>Overstay Duration:</strong> {{overstay_duration}}</p> 
-        <p><strong>Fine Amount:</strong> {{fine_amount}}</p>
+        <div class="ticket-body">
+            <div class="violation-details">
+                <h3>License Plate: {{license_plate}}</h3>
+                <p>Slot Number: {{slot_number}}</p>
+                <p>Date: {{entry_time}}</p>
+                <p>Entry Time: {{entry_time}}</p>
+                <p>Exit Time: {{exit_time}}</p>
+            </div>
+
+            <div class="fine-details">
+                <p><strong>Overstay Duration:</strong> {{overstay_duration}}</p>
+                <p><strong>Fine Amount:</strong> {{fine_amount}}</p>
+            </div>
+        </div>
     </div>
-</div>
-</div>
 
 </body>
+
 </html>
