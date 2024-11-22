@@ -19,7 +19,7 @@ $filter = isset($_POST['filter']) ? $_POST['filter'] : 'all';
 $sortColumn = isset($_POST['sortColumn']) ? $_POST['sortColumn'] : 'fname';
 $sortOrder = isset($_POST['sortOrder']) ? $_POST['sortOrder'] : 'ASC';
 
-$sql = "SELECT u.user_id, 
+$sql = "SELECT DISTINCT u.user_id, 
                 u.fname, 
                 u.lname, 
                 v.plate_number, 
@@ -154,9 +154,9 @@ if (isset($_POST['action']) && $_POST['action'] === 'update_overtime') {
                                         <td>{$row['lname']}</td>
                                         <td class='geist-mono'>{$row['plate_number']}</td>
                                         <td id='ticket-status-{$row['ticket_id']}'>" .
-                                    ($row['is_overtime'] == 1 ?
-                                        "<span class='badge badge-danger'>Issued</span>" :
-                                        "<span class='badge badge-success'>No Ticket</span>") .
+                                    ($row['payment_id'] ? "<span class='badge badge-success'>No Ticket</span>" :
+                                    ($row['is_overtime'] == 1 ? "<span class='badge badge-danger'>Issued</span>" :
+                                    "<span class='badge badge-success'>No Ticket</span>")) .
                                     "</td>
                                     <td>" .
                                     (
@@ -261,4 +261,4 @@ if (isset($_POST['action']) && $_POST['action'] === 'update_overtime') {
     </script>
 </body>
 
-</html>
+</html> 

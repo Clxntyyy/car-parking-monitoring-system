@@ -183,7 +183,7 @@ adminModal($filteredUsers);
           <div class="left-parking">
             <?php renderParkingSlots($parkingSlots, 'LP'); ?>
           </div>
-          <div class="entrance">you are here 📍</div>
+          <div class="entrance">Iba Town Center</div>
           <div class="right-parking">
             <?php renderParkingSlots($parkingSlots, 'RP'); ?>
           </div>

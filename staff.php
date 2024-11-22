@@ -56,6 +56,8 @@ JOIN
     user_tbl u ON t.user_id = u.user_id
 LEFT JOIN 
     payment_tbl p ON t.ticket_id = p.ticket_id
+WHERE 
+    p.payment_id IS NULL
 ";
 $result = $conn->query($query);
 
@@ -70,7 +72,23 @@ if (isset($_POST['action']) && $_POST['action'] === 'process_payment') {
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("iids", $ticket_id, $user_id, $amount, $payment_method);
 
-    echo json_encode(['success' => $stmt->execute()]);
+    if ($stmt->execute()) {
+        $delete_sql = "DELETE FROM ticket_tbl WHERE ticket_id = ?";
+        $delete_stmt = $conn->prepare($delete_sql);
+        $delete_stmt->bind_param("i", $ticket_id);
+        $delete_stmt->execute();
+
+        // Update parking slot status to 'available'
+        $update_slot_sql = "UPDATE parkingslots_tbl SET status = 'available', user_id = NULL, vehicle_id = NULL 
+                            WHERE pslot_id = (SELECT pslot_id FROM ticket_tbl WHERE ticket_id = ?)";
+        $update_slot_stmt = $conn->prepare($update_slot_sql);
+        $update_slot_stmt->bind_param("i", $ticket_id);
+        $update_slot_stmt->execute();
+
+        echo json_encode(['success' => true, 'ticket_id' => $ticket_id]);
+    } else {
+        echo json_encode(['success' => false]);
+    }
     exit();
 }
 ?>
@@ -212,7 +230,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'process_payment') {
                     success: function(response) {
                         const result = JSON.parse(response);
                         if (result.success) {
-                            location.reload(); // Refresh to show updated status
+                            $(`tr:has(button[data-ticket-id="${result.ticket_id}"])`).remove();
                         } else {
                             alert('Payment processing failed');
                         }

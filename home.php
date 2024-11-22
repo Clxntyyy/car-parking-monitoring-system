@@ -19,6 +19,11 @@ if ($id) {
         $stmtUser->bind_param("i", $id);
         $stmtUser->execute();
         $user = $stmtUser->get_result()->fetch_assoc();
+        if (!$user) {
+            // Redirect to home if user record is not found
+            header("Location: home.php");
+            exit();
+        }
     } else {
         // Handle error
         die("Error preparing statement: {$con->error}");
