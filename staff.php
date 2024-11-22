@@ -73,17 +73,18 @@ if (isset($_POST['action']) && $_POST['action'] === 'process_payment') {
     $stmt->bind_param("iids", $ticket_id, $user_id, $amount, $payment_method);
 
     if ($stmt->execute()) {
-        $delete_sql = "DELETE FROM ticket_tbl WHERE ticket_id = ?";
-        $delete_stmt = $conn->prepare($delete_sql);
-        $delete_stmt->bind_param("i", $ticket_id);
-        $delete_stmt->execute();
-
         // Update parking slot status to 'available'
         $update_slot_sql = "UPDATE parkingslots_tbl SET status = 'available', user_id = NULL, vehicle_id = NULL 
                             WHERE pslot_id = (SELECT pslot_id FROM ticket_tbl WHERE ticket_id = ?)";
         $update_slot_stmt = $conn->prepare($update_slot_sql);
         $update_slot_stmt->bind_param("i", $ticket_id);
         $update_slot_stmt->execute();
+
+        // Delete the ticket
+        $delete_sql = "DELETE FROM ticket_tbl WHERE ticket_id = ?";
+        $delete_stmt = $conn->prepare($delete_sql);
+        $delete_stmt->bind_param("i", $ticket_id);
+        $delete_stmt->execute();
 
         echo json_encode(['success' => true, 'ticket_id' => $ticket_id]);
     } else {
@@ -230,7 +231,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'process_payment') {
                     success: function(response) {
                         const result = JSON.parse(response);
                         if (result.success) {
-                            $(`tr:has(button[data-ticket-id="${result.ticket_id}"])`).remove();
+                            location.reload();
                         } else {
                             alert('Payment processing failed');
                         }
